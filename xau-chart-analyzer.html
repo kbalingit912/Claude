@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>XAU/USD Chart Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0D10;
+    --panel:#12161B;
+    --panel-2:#161B21;
+    --line:#232A31;
+    --text:#E8ECEF;
+    --muted:#7C8894;
+    --up:#16D982;
+    --down:#FF5C5C;
+    --amber:#F0A93E;
+    --blue:#4FA3F7;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  .wrap{max-width:1280px; margin:0 auto; padding:28px 20px 60px;}
+
+  header.top{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom:1px solid var(--line); padding-bottom:18px; margin-bottom:22px;
+    flex-wrap:wrap; gap:14px;
+  }
+  .brand{display:flex; flex-direction:column; gap:4px;}
+  .brand .mark{
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:26px; letter-spacing:-0.02em;
+    display:flex; align-items:center; gap:10px;
+  }
+  .brand .mark .dot{width:9px; height:9px; border-radius:50%; background:var(--amber); box-shadow:0 0 10px var(--amber);}
+  .brand .sub{color:var(--muted); font-size:13px; font-family:'JetBrains Mono',monospace;}
+
+  .upload-section{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px;
+    margin-bottom:24px;
+  }
+  .upload-section h3{
+    margin:0 0 14px 0; font-family:'Space Grotesk',sans-serif; font-size:14px; text-transform:uppercase;
+    color:var(--muted); letter-spacing:.08em;
+  }
+
+  .upload-area{
+    border:2px dashed var(--line); border-radius:8px; padding:28px; text-align:center; cursor:pointer;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .upload-area:hover{border-color:var(--amber); background:rgba(240,169,62,.05);}
+  .upload-area.drag{border-color:var(--up); background:rgba(22,217,130,.08);}
+  .upload-area input{display:none;}
+  .upload-area p{margin:0 0 8px 0; color:var(--muted); font-size:13px;}
+  .upload-area .hint{font-size:12px; color:var(--muted); margin-top:8px;}
+
+  .preview-section{
+    display:flex; gap:16px; margin-top:16px; flex-wrap:wrap;
+  }
+  .preview-img{
+    max-width:300px; max-height:200px; border-radius:8px; border:1px solid var(--line);
+  }
+
+  .controls{display:flex; gap:10px; margin-top:14px;}
+  button.primary, button.secondary{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13px; border:none;
+    padding:10px 16px; border-radius:7px; cursor:pointer;
+    transition:transform .12s ease, opacity .12s ease;
+  }
+  button.primary{
+    background:var(--up); color:#04150D;
+  }
+  button.primary:hover{transform:translateY(-1px);}
+  button.primary:disabled{opacity:.55; cursor:progress;}
+
+  button.secondary{
+    background:var(--panel-2); color:var(--text); border:1px solid var(--line);
+  }
+  button.secondary:hover{background:var(--line);}
+
+  .state{
+    border:1px dashed var(--line); border-radius:10px; padding:34px 20px; text-align:center;
+    color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:13px;
+  }
+  .state.error{border-color:var(--down); color:var(--down);}
+
+  .analysis-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:24px;
+  }
+
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .card h4{
+    margin:0 0 8px 0; font-family:'Space Grotesk',sans-serif; font-size:12px;
+    text-transform:uppercase; letter-spacing:.08em; color:var(--amber);
+  }
+
+  .levels-box{
+    font-family:'JetBrains Mono',monospace; font-size:13px; line-height:1.6;
+  }
+  .levels-box .level{
+    display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line);
+  }
+  .levels-box .level:last-child{border-bottom:none;}
+  .levels-box .label{color:var(--muted); font-size:11px; text-transform:uppercase;}
+  .levels-box .value{color:var(--text); font-weight:500;}
+
+  .gauge-row{display:flex; align-items:center; gap:10px; margin-top:8px;}
+  .gauge{display:flex; gap:4px;}
+  .gauge i{width:16px; height:6px; border-radius:3px; background:var(--line); display:block;}
+  .gauge i.on{background:var(--amber);}
+  .gauge-label{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);}
+
+  .scenario-box{
+    border-top:1px solid var(--line); padding-top:12px; font-size:13px; line-height:1.6; color:var(--text);
+  }
+  .scenario-box .label{
+    font-family:'JetBrains Mono',monospace; font-size:10px; text-transform:uppercase;
+    color:var(--blue); display:block; margin-bottom:6px; letter-spacing:.08em;
+  }
+
+  .factors-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:5px;}
+  .factors-list li{font-size:12.5px; color:var(--muted); padding-left:14px; position:relative;}
+  .factors-list li::before{content:'—'; position:absolute; left:0; color:var(--line);}
+
+  footer{
+    margin-top:36px; padding-top:18px; border-top:1px solid var(--line);
+    font-size:11.5px; color:var(--muted); line-height:1.6;
+  }
+  footer b{color:var(--amber);}
+
+  @media (prefers-reduced-motion: reduce){ button{transition:none;} }
+  @media (max-width:768px){
+    .analysis-grid{grid-template-columns:1fr;}
+    .upload-area{padding:20px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark"><span class="dot">◆</span>XAU/USD ANALYZER</div>
+      <div class="sub">Upload TradingView chart → Entry zones, confluence &amp; risk/reward</div>
+    </div>
+  </header>
+
+  <div class="upload-section">
+    <h3>Option 1: Upload Chart</h3>
+    <div class="upload-area" id="uploadArea">
+      <input type="file" id="imageInput" accept="image/*" />
+      <p>Click to upload or drag a TradingView chart snapshot</p>
+      <div class="hint">PNG, JPG, or WebP · max 10MB</div>
+    </div>
+    <div id="previewContainer"></div>
+    <div class="controls">
+      <button class="primary" id="analyzeBtn" onclick="analyzeChart()" disabled>Analyze Chart</button>
+      <button class="secondary" id="clearBtn" onclick="clearChart()" style="display:none;">Clear</button>
+    </div>
+  </div>
+
+  <div class="upload-section">
+    <h3>Option 2: Today's Gold News & Structure</h3>
+    <p style="margin:0 0 14px 0; font-size:13px; color:var(--muted);">Get real-time XAU/USD news, technical structure, and confluence without uploading a chart.</p>
+    <div class="controls">
+      <button class="primary" id="newsBriefsBtn" onclick="pullGoldBrief()">📰 Pull News Brief</button>
+    </div>
+  </div>
+
+  <div id="content"></div>
+
+  <footer>
+    <b>Not financial advice.</b> This tool analyzes chart structure and market context to help you think through entry, stop, and target levels. It does not know your account size, risk tolerance, or open positions. Gold trading is leveraged and can result in losses exceeding your deposit. Entry zones and confluence scores reflect alignment of identified factors — not a guarantee of outcome. Always size positions and set stops according to your own risk management rules, and consider consulting a licensed financial advisor before risking capital.
+  </footer>
+</div>
+
+<script>
+const uploadArea = document.getElementById('uploadArea');
+const imageInput = document.getElementById('imageInput');
+const previewContainer = document.getElementById('previewContainer');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const clearBtn = document.getElementById('clearBtn');
+const content = document.getElementById('content');
+
+let uploadedImage = null;
+
+uploadArea.addEventListener('click', () => imageInput.click());
+uploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadArea.classList.add('drag');
+});
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'));
+uploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadArea.classList.remove('drag');
+  const files = e.dataTransfer.files;
+  if(files.length) handleImageSelect(files[0]);
+});
+
+imageInput.addEventListener('change', (e) => {
+  if(e.target.files.length) handleImageSelect(e.target.files[0]);
+});
+
+function handleImageSelect(file){
+  if(file.size > 10*1024*1024){ alert('File too large (max 10MB)'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    uploadedImage = e.target.result;
+    previewContainer.innerHTML = `<div class="preview-section"><img src="${uploadedImage}" class="preview-img" /></div>`;
+    analyzeBtn.disabled = false;
+    clearBtn.style.display = 'inline-block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearChart(){
+  uploadedImage = null;
+  imageInput.value = '';
+  previewContainer.innerHTML = '';
+  analyzeBtn.disabled = true;
+  clearBtn.style.display = 'none';
+  content.innerHTML = '';
+}
+
+function esc(s){
+  const d = document.createElement('div');
+  d.innerText = (s===undefined||s===null) ? '' : String(s);
+  return d.innerHTML;
+}
+
+function gaugeHtml(n){
+  n = Math.max(0, Math.min(4, Number(n)||0));
+  let bars = '';
+  for(let i=0;i<4;i++){ bars += `<i class="${i<n?'on':''}"></i>`; }
+  return `<div class="gauge">${bars}</div><span class="gauge-label">${n}/4 confluence</span>`;
+}
+
+async function analyzeChart(){
+  analyzeBtn.disabled = true;
+  analyzeBtn.textContent = '● Analyzing chart…';
+  content.innerHTML = `<div class="state">Analyzing your XAU/USD chart for entry zones, levels, and confluence…</div>`;
+
+  try{
+    const base64Image = uploadedImage.split(',')[1];
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1200,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "image",
+                source: {
+                  type: "base64",
+                  media_type: "image/jpeg",
+                  data: base64Image
+                }
+              },
+              {
+                type: "text",
+                text: `You are a XAU/USD (gold) trading analyst. Analyze this TradingView chart carefully and respond with ONLY minified JSON (no markdown, no commentary) matching exactly this schema:
+
+{
+  "timestamp": "<current date/time>",
+  "chartReadings": {
+    "currentPrice": "<latest price level shown, e.g. 2045.50>",
+    "trend": "bullish|bearish|range",
+    "shortTermTrend": "up|down|consolidating",
+    "keyLevels": {
+      "resistance1": "<nearest resistance above current price>",
+      "resistance2": "<second resistance level>",
+      "support1": "<nearest support below current price>",
+      "support2": "<second support level>"
+    },
+    "confluenceFactors": ["<up to 4 key technical or structural factors you observe>"]
+  },
+  "entryZones": [
+    {
+      "level": "<entry price level>",
+      "description": "<=20 words describing why this level makes sense"
+    }
+  ],
+  "stopLoss": "<stop level below current structure>",
+  "targets": [
+    {
+      "level": "<target price>",
+      "description": "<=15 words describing this target"
+    }
+  ],
+  "riskReward": "<e.g. '1:2' or '1:3' - ratio of stop distance to first target>",
+  "confluence": <0-4 number of independent factors aligning: trend direction, key level proximity, pattern formation, momentum>,
+  "scenario": "<=35 words, CONDITIONAL phrasing only. E.g. 'A close above X could open a move to Y; failure of X risks a drop to Z.' Never use 'buy now' or 'sell now'.",
+  "caveats": ["<=15 words each, up to 2 factors limiting confidence or adding risk"]
+}
+
+Rules: Use ONLY what's visible in the chart. Never invent levels not shown. Always use conditional language in scenario ("could", "if", "risks", "watch for"). Be specific with numbers. Output raw JSON only.`
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    if(!response.ok){
+      throw new Error(`API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    const textBlocks = (data.content||[]).filter(b => b.type === "text").map(b => b.text);
+    let raw = textBlocks.join("\n").trim();
+    raw = raw.replace(/```json|```/g, "").trim();
+
+    const firstBrace = raw.indexOf('{');
+    const lastBrace = raw.lastIndexOf('}');
+    if(firstBrace === -1 || lastBrace === -1){ throw new Error("No JSON found in response"); }
+    raw = raw.slice(firstBrace, lastBrace+1);
+
+    const parsed = JSON.parse(raw);
+    renderAnalysis(parsed);
+
+  }catch(err){
+    console.error("Chart analyzer error:", err);
+    content.innerHTML = `<div class="state error">Couldn't analyze the chart (${esc(err.message)}). Try uploading a clearer TradingView snapshot.</div>`;
+  }finally{
+    analyzeBtn.disabled = false;
+    analyzeBtn.textContent = 'Analyze Chart';
+  }
+}
+
+async function pullGoldBrief(){
+  const newsBtn = document.getElementById('newsBriefsBtn');
+  newsBtn.disabled = true;
+  newsBtn.textContent = '● Pulling live data…';
+  content.innerHTML = `<div class="state">Fetching today's XAU/USD news and technical structure…</div>`;
+
+  try{
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1200,
+        system: `You are a gold (XAU/USD) market summarizer. Use web search to find TODAY's real news headlines and current technical price structure for XAU/USD (gold). Respond with ONLY minified JSON (no markdown fences, no commentary) matching exactly this schema:
+{"timestamp":"<short date/time label>","news":[{"headline":"<=12 words","source":"<outlet>","note":"<=16 words"},...up to 4 items],"structure":{"currentPrice":"<level>","trend":"bullish|bearish|range","support":"<level>","resistance":"<level>","confluenceFactors":["<=8 words each, up to 3"],"confluence":<0-4>,"scenario":"<=35 words, CONDITIONAL phrasing only. E.g. 'A close above X could open a move to Y; failure risks drop to Z.' Never say buy/sell/enter now."}}
+
+Rules: use real current data from search, not placeholders. Always use conditional language in scenario. Output raw JSON only.`,
+        messages: [
+          { role: "user", content: "Give me today's XAU/USD brief in the required JSON schema." }
+        ],
+        tools: [
+          { type: "web_search_20250305", name: "web_search" }
+        ]
+      })
+    });
+
+    if(!response.ok){
+      throw new Error(`API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    const textBlocks = (data.content||[]).filter(b => b.type === "text").map(b => b.text);
+    let raw = textBlocks.join("\n").trim();
+    raw = raw.replace(/```json|```/g, "").trim();
+
+    const firstBrace = raw.indexOf('{');
+    const lastBrace = raw.lastIndexOf('}');
+    if(firstBrace === -1 || lastBrace === -1){ throw new Error("No JSON found in response"); }
+    raw = raw.slice(firstBrace, lastBrace+1);
+
+    const parsed = JSON.parse(raw);
+    renderNewsBrief(parsed);
+
+  }catch(err){
+    console.error("Gold brief error:", err);
+    content.innerHTML = `<div class="state error">Couldn't fetch the brief (${esc(err.message)}). Try again in a moment.</div>`;
+  }finally{
+    newsBtn.disabled = false;
+    newsBtn.textContent = '📰 Pull News Brief';
+  }
+}
+
+function renderAnalysis(data){
+  const readings = data.chartReadings || {};
+  const factors = (readings.confluenceFactors || []).map(f => `<li>${esc(f)}</li>`).join('');
+  const entryZones = (data.entryZones || []).map(e => `
+    <div class="level">
+      <span class="label">Entry</span>
+      <div><div class="value">${esc(e.level)}</div><div style="font-size:11px; color:var(--muted); margin-top:2px;">${esc(e.description)}</div></div>
+    </div>
+  `).join('');
+
+  const targets = (data.targets || []).map(t => `
+    <div class="level">
+      <span class="label">Target</span>
+      <div><div class="value">${esc(t.level)}</div><div style="font-size:11px; color:var(--muted); margin-top:2px;">${esc(t.description)}</div></div>
+    </div>
+  `).join('');
+
+  const caveats = (data.caveats || []).map(c => `<li>${esc(c)}</li>`).join('');
+
+  content.innerHTML = `
+    <div class="analysis-grid">
+      <div class="card">
+        <h4>Chart Reading</h4>
+        <div class="levels-box">
+          <div class="level">
+            <span class="label">Price</span>
+            <span class="value">${esc(readings.currentPrice)}</span>
+          </div>
+          <div class="level">
+            <span class="label">Trend</span>
+            <span class="value">${esc(readings.trend)}</span>
+          </div>
+          <div class="level">
+            <span class="label">ST Trend</span>
+            <span class="value">${esc(readings.shortTermTrend)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Key Levels</h4>
+        <div class="levels-box">
+          <div class="level">
+            <span class="label">R2</span>
+            <span class="value">${esc((readings.keyLevels || {}).resistance2)}</span>
+          </div>
+          <div class="level">
+            <span class="label">R1</span>
+            <span class="value">${esc((readings.keyLevels || {}).resistance1)}</span>
+          </div>
+          <div class="level">
+            <span class="label">S1</span>
+            <span class="value">${esc((readings.keyLevels || {}).support1)}</span>
+          </div>
+          <div class="level">
+            <span class="label">S2</span>
+            <span class="value">${esc((readings.keyLevels || {}).support2)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Confluence & Factors</h4>
+        <div class="gauge-row">${gaugeHtml(data.confluence)}</div>
+        <ul class="factors-list">${factors || '<li>No factors identified</li>'}</ul>
+      </div>
+
+      <div class="card">
+        <h4>Entry & Exits</h4>
+        <div class="levels-box">
+          ${entryZones}
+          <div class="level" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--line);">
+            <span class="label">Stop Loss</span>
+            <span class="value">${esc(data.stopLoss)}</span>
+          </div>
+          ${targets}
+          <div class="level" style="margin-top:8px;">
+            <span class="label">Risk:Reward</span>
+            <span class="value">${esc(data.riskReward)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Scenario</h4>
+        <div class="scenario-box">
+          <span class="label">Conditional</span>
+          ${esc(data.scenario)}
+        </div>
+      </div>
+
+      ${caveats ? `<div class="card">
+        <h4>Caveats & Limits</h4>
+        <ul class="factors-list">${caveats}</ul>
+      </div>` : ''}
+    </div>
+  `;
+}
+
+function renderNewsBrief(data){
+  const struct = data.structure || {};
+  const factors = (struct.confluenceFactors || []).map(f => `<li>${esc(f)}</li>`).join('');
+  const newsItems = (data.news || []).map(n => `
+    <div style="padding:12px; border-bottom:1px solid var(--line); font-size:13px;">
+      <div style="font-weight:500; color:var(--text); margin-bottom:4px;">${esc(n.headline)}</div>
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted);">
+        <span style="color:var(--blue);">${esc(n.source)}</span>
+        <span>${esc(n.note)}</span>
+      </div>
+    </div>
+  `).join('');
+
+  content.innerHTML = `
+    <section style="margin-bottom:24px;">
+      <h2 class="label">Today's Headlines</h2>
+      <div style="border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel);">
+        ${newsItems || '<div style="padding:12px; color:var(--muted);">No news items found.</div>'}
+      </div>
+    </section>
+
+    <div class="analysis-grid">
+      <div class="card">
+        <h4>Market Structure</h4>
+        <div class="levels-box">
+          <div class="level">
+            <span class="label">Price</span>
+            <span class="value">${esc(struct.currentPrice)}</span>
+          </div>
+          <div class="level">
+            <span class="label">Trend</span>
+            <span class="value">${esc(struct.trend)}</span>
+          </div>
+          <div class="level">
+            <span class="label">Resistance</span>
+            <span class="value">${esc(struct.resistance)}</span>
+          </div>
+          <div class="level">
+            <span class="label">Support</span>
+            <span class="value">${esc(struct.support)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Confluence & Factors</h4>
+        <div class="gauge-row">${gaugeHtml(struct.confluence)}</div>
+        <ul class="factors-list">${factors || '<li>No factors identified</li>'}</ul>
+      </div>
+
+      <div class="card">
+        <h4>Scenario</h4>
+        <div class="scenario-box">
+          <span class="label">Conditional</span>
+          ${esc(struct.scenario)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
