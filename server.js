@@ -1,16 +1,19 @@
 const express = require('express');
 const fetch = require('node-fetch');
-const dotenv = require('dotenv');
 const path = require('path');
 
-dotenv.config();
+// Only load dotenv in development (not in Railway)
+if(process.env.NODE_ENV !== 'production'){
+  require('dotenv').config();
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 
 if(!API_KEY){
-  console.error('ERROR: ANTHROPIC_API_KEY not set in .env');
+  console.error('ERROR: ANTHROPIC_API_KEY environment variable not set');
+  console.error('In Railway: go to Variables tab and add ANTHROPIC_API_KEY');
   process.exit(1);
 }
 
