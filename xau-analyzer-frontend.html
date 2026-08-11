@@ -242,11 +242,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // The upload-area is now the direct parent
     const uploadArea = imageInput.parentElement;
+    console.log(`Setup ${tf}:`, { uploadArea, imageInput });
 
-    // File input change handler
-    imageInput.addEventListener('change', (e) => {
+    // File input change handler - use both change and input events for better compatibility
+    const handleChange = (e) => {
+      console.log(`${tf} file input changed:`, e.target.files);
       if(e.target.files && e.target.files.length) {
         handleImageSelect(tf, e.target.files[0]);
+      }
+    };
+
+    imageInput.addEventListener('change', handleChange);
+    imageInput.addEventListener('input', handleChange);
+
+    // Make upload-area clickable to trigger file input
+    uploadArea.addEventListener('click', (e) => {
+      if(e.target !== imageInput) {
+        console.log(`${tf} upload-area clicked, triggering file input`);
+        imageInput.click();
       }
     });
 
@@ -271,6 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(files.length) handleImageSelect(tf, files[0]);
     });
   });
+  console.log('DOMContentLoaded: File inputs setup complete');
 });
 
 function handleFileSelect(timeframe, files){
