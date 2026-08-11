@@ -215,50 +215,57 @@
 </div>
 
 <script>
-const previewContainer = document.getElementById('previewContainer');
-const analyzeBtn = document.getElementById('analyzeBtn');
-const clearBtn = document.getElementById('clearBtn');
-const content = document.getElementById('content');
-
+let previewContainer, analyzeBtn, clearBtn, content;
 const timeframes = ['4H', '1H', '15M', '5M'];
 let uploadedImages = { '4H': null, '1H': null, '15M': null, '5M': null };
 
-// Setup upload areas
-timeframes.forEach(tf => {
-  const uploadArea = document.getElementById(`uploadArea${tf}`);
-  const imageInput = document.getElementById(`imageInput${tf}`);
+document.addEventListener('DOMContentLoaded', () => {
+  previewContainer = document.getElementById('previewContainer');
+  analyzeBtn = document.getElementById('analyzeBtn');
+  clearBtn = document.getElementById('clearBtn');
+  content = document.getElementById('content');
 
-  if(!uploadArea || !imageInput){
-    console.error(`Missing elements for timeframe ${tf}`);
-    return;
-  }
+  // Setup upload areas
+  timeframes.forEach(tf => {
+    const uploadArea = document.getElementById(`uploadArea${tf}`);
+    const imageInput = document.getElementById(`imageInput${tf}`);
 
-  uploadArea.addEventListener('click', () => {
-    imageInput.click();
-  });
+    if(!uploadArea || !imageInput){
+      console.error(`Missing elements for ${tf}`);
+      return;
+    }
 
-  uploadArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    uploadArea.classList.add('drag');
-  });
+    // Click to open file dialog
+    uploadArea.style.cursor = 'pointer';
+    uploadArea.addEventListener('click', (e) => {
+      imageInput.click();
+    });
 
-  uploadArea.addEventListener('dragleave', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    uploadArea.classList.remove('drag');
-  });
+    // Drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadArea.classList.add('drag');
+    });
 
-  uploadArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    uploadArea.classList.remove('drag');
-    const files = e.dataTransfer.files;
-    if(files.length) handleImageSelect(tf, files[0]);
-  });
+    uploadArea.addEventListener('dragleave', (e) => {
+      uploadArea.classList.remove('drag');
+    });
 
-  imageInput.addEventListener('change', (e) => {
-    if(e.target.files.length) handleImageSelect(tf, e.target.files[0]);
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadArea.classList.remove('drag');
+      const files = e.dataTransfer.files;
+      if(files.length) handleImageSelect(tf, files[0]);
+    });
+
+    // File input change
+    imageInput.addEventListener('change', (e) => {
+      if(e.target.files && e.target.files.length) {
+        handleImageSelect(tf, e.target.files[0]);
+      }
+    });
   });
 });
 
