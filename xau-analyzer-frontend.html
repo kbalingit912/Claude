@@ -154,16 +154,48 @@
   </header>
 
   <div class="upload-section">
-    <h3>Option 1: Upload Chart</h3>
-    <div class="upload-area" id="uploadArea">
-      <input type="file" id="imageInput" accept="image/*" />
-      <p>Click to upload or drag a TradingView chart snapshot</p>
-      <div class="hint">PNG, JPG, or WebP · max 10MB</div>
+    <h3>Option 1: Upload Charts by Timeframe</h3>
+    <p style="margin:0 0 16px 0; font-size:13px; color:var(--muted);">Upload charts for multiple timeframes to analyze confluence across timeframes.</p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:16px;">
+      <!-- 4H -->
+      <div class="upload-area" id="uploadArea4H" data-timeframe="4H">
+        <input type="file" id="imageInput4H" accept="image/*" />
+        <p style="font-weight:600;">4 HOUR</p>
+        <p>Click to upload or drag</p>
+        <div class="hint">PNG, JPG, or WebP</div>
+      </div>
+
+      <!-- 1H -->
+      <div class="upload-area" id="uploadArea1H" data-timeframe="1H">
+        <input type="file" id="imageInput1H" accept="image/*" />
+        <p style="font-weight:600;">1 HOUR</p>
+        <p>Click to upload or drag</p>
+        <div class="hint">PNG, JPG, or WebP</div>
+      </div>
+
+      <!-- 15M -->
+      <div class="upload-area" id="uploadArea15M" data-timeframe="15M">
+        <input type="file" id="imageInput15M" accept="image/*" />
+        <p style="font-weight:600;">15 MIN</p>
+        <p>Click to upload or drag</p>
+        <div class="hint">PNG, JPG, or WebP</div>
+      </div>
+
+      <!-- 5M -->
+      <div class="upload-area" id="uploadArea5M" data-timeframe="5M">
+        <input type="file" id="imageInput5M" accept="image/*" />
+        <p style="font-weight:600;">5 MIN</p>
+        <p>Click to upload or drag</p>
+        <div class="hint">PNG, JPG, or WebP</div>
+      </div>
     </div>
+
     <div id="previewContainer"></div>
+
     <div class="controls">
-      <button class="primary" id="analyzeBtn" onclick="analyzeChart()" disabled>Analyze Chart</button>
-      <button class="secondary" id="clearBtn" onclick="clearChart()" style="display:none;">Clear</button>
+      <button class="primary" id="analyzeBtn" onclick="analyzeAllCharts()" disabled>Analyze All Timeframes</button>
+      <button class="secondary" id="clearBtn" onclick="clearAllCharts()" style="display:none;">Clear All</button>
     </div>
   </div>
 
@@ -183,47 +215,73 @@
 </div>
 
 <script>
-const uploadArea = document.getElementById('uploadArea');
-const imageInput = document.getElementById('imageInput');
 const previewContainer = document.getElementById('previewContainer');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const clearBtn = document.getElementById('clearBtn');
 const content = document.getElementById('content');
 
-let uploadedImage = null;
+const timeframes = ['4H', '1H', '15M', '5M'];
+let uploadedImages = { '4H': null, '1H': null, '15M': null, '5M': null };
 
-uploadArea.addEventListener('click', () => imageInput.click());
-uploadArea.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  uploadArea.classList.add('drag');
-});
-uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'));
-uploadArea.addEventListener('drop', (e) => {
-  e.preventDefault();
-  uploadArea.classList.remove('drag');
-  const files = e.dataTransfer.files;
-  if(files.length) handleImageSelect(files[0]);
+// Setup upload areas
+timeframes.forEach(tf => {
+  const uploadArea = document.getElementById(`uploadArea${tf}`);
+  const imageInput = document.getElementById(`imageInput${tf}`);
+
+  uploadArea.addEventListener('click', () => imageInput.click());
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('drag');
+  });
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'));
+  uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag');
+    const files = e.dataTransfer.files;
+    if(files.length) handleImageSelect(tf, files[0]);
+  });
+
+  imageInput.addEventListener('change', (e) => {
+    if(e.target.files.length) handleImageSelect(tf, e.target.files[0]);
+  });
 });
 
-imageInput.addEventListener('change', (e) => {
-  if(e.target.files.length) handleImageSelect(e.target.files[0]);
-});
-
-function handleImageSelect(file){
+function handleImageSelect(timeframe, file){
   if(file.size > 10*1024*1024){ alert('File too large (max 10MB)'); return; }
   const reader = new FileReader();
   reader.onload = (e) => {
-    uploadedImage = e.target.result;
-    previewContainer.innerHTML = `<div class="preview-section"><img src="${uploadedImage}" class="preview-img" /></div>`;
-    analyzeBtn.disabled = false;
-    clearBtn.style.display = 'inline-block';
+    uploadedImages[timeframe] = e.target.result;
+    updatePreviews();
+    updateButtons();
   };
   reader.readAsDataURL(file);
 }
 
-function clearChart(){
-  uploadedImage = null;
-  imageInput.value = '';
+function updatePreviews(){
+  let previewHtml = '<div class="preview-section">';
+  timeframes.forEach(tf => {
+    if(uploadedImages[tf]){
+      previewHtml += `<div style="text-align:center;">
+        <div style="font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.08em;">${tf}</div>
+        <img src="${uploadedImages[tf]}" class="preview-img" />
+      </div>`;
+    }
+  });
+  previewHtml += '</div>';
+  previewContainer.innerHTML = previewHtml;
+}
+
+function updateButtons(){
+  const hasAnyImage = timeframes.some(tf => uploadedImages[tf]);
+  analyzeBtn.disabled = !hasAnyImage;
+  clearBtn.style.display = hasAnyImage ? 'inline-block' : 'none';
+}
+
+function clearAllCharts(){
+  timeframes.forEach(tf => {
+    uploadedImages[tf] = null;
+    document.getElementById(`imageInput${tf}`).value = '';
+  });
   previewContainer.innerHTML = '';
   analyzeBtn.disabled = true;
   clearBtn.style.display = 'none';
@@ -243,33 +301,47 @@ function gaugeHtml(n){
   return `<div class="gauge">${bars}</div><span class="gauge-label">${n}/4 confluence</span>`;
 }
 
-async function analyzeChart(){
+async function analyzeAllCharts(){
   analyzeBtn.disabled = true;
-  analyzeBtn.textContent = '● Analyzing chart…';
-  content.innerHTML = `<div class="state">Analyzing your XAU/USD chart for entry zones, levels, and confluence…</div>`;
+  analyzeBtn.textContent = '● Analyzing all timeframes…';
+  content.innerHTML = `<div class="state">Analyzing XAU/USD across all uploaded timeframes…</div>`;
 
   try{
-    const base64Image = uploadedImage.split(',')[1];
-    const response = await fetch('/api/analyze-chart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64: base64Image })
-    });
+    const results = {};
+    const errors = {};
 
-    if(!response.ok){
-      const err = await response.json();
-      throw new Error(err.error || `Server error ${response.status}`);
+    // Analyze each uploaded timeframe
+    for(const tf of timeframes){
+      if(!uploadedImages[tf]) continue;
+
+      try{
+        const base64Image = uploadedImages[tf].split(',')[1];
+        const response = await fetch('/api/analyze-chart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64Image })
+        });
+
+        if(!response.ok){
+          const err = await response.json();
+          throw new Error(err.error || `Server error ${response.status}`);
+        }
+
+        const result = await response.json();
+        results[tf] = result.data;
+      }catch(err){
+        errors[tf] = err.message;
+      }
     }
 
-    const result = await response.json();
-    renderAnalysis(result.data);
+    renderMultiTimeframeAnalysis(results, errors);
 
   }catch(err){
     console.error('Chart analyzer error:', err);
-    content.innerHTML = `<div class="state error">Couldn't analyze the chart (${esc(err.message)}). Try uploading a clearer TradingView snapshot.</div>`;
+    content.innerHTML = `<div class="state error">Couldn't analyze the charts (${esc(err.message)}). Try uploading clearer TradingView snapshots.</div>`;
   }finally{
     analyzeBtn.disabled = false;
-    analyzeBtn.textContent = 'Analyze Chart';
+    analyzeBtn.textContent = 'Analyze All Timeframes';
   }
 }
 
@@ -300,6 +372,124 @@ async function pullGoldBrief(){
     newsBtn.disabled = false;
     newsBtn.textContent = '📰 Pull News Brief';
   }
+}
+
+function renderMultiTimeframeAnalysis(results, errors){
+  let html = '';
+
+  timeframes.forEach(tf => {
+    if(errors[tf]){
+      html += `<div style="background:var(--panel); border:1px solid var(--down); border-radius:12px; padding:18px; margin-bottom:16px;">
+        <h3 style="margin:0 0 12px 0; color:var(--down); font-family:'Space Grotesk',sans-serif;">${tf} Timeframe</h3>
+        <div class="state error">Error: ${esc(errors[tf])}</div>
+      </div>`;
+      return;
+    }
+
+    if(!results[tf]){
+      html += `<div style="background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:16px;">
+        <h3 style="margin:0 0 12px 0; font-family:'Space Grotesk',sans-serif;">${tf} Timeframe</h3>
+        <div style="color:var(--muted);">No chart uploaded</div>
+      </div>`;
+      return;
+    }
+
+    const data = results[tf];
+    const readings = data.chartReadings || {};
+    const factors = (readings.confluenceFactors || []).map(f => `<li>${esc(f)}</li>`).join('');
+    const entryZones = (data.entryZones || []).map(e => `
+      <div class="level">
+        <span class="label">Entry</span>
+        <div><div class="value">${esc(e.level)}</div><div style="font-size:11px; color:var(--muted); margin-top:2px;">${esc(e.description)}</div></div>
+      </div>
+    `).join('');
+    const targets = (data.targets || []).map(t => `
+      <div class="level">
+        <span class="label">Target</span>
+        <div><div class="value">${esc(t.level)}</div><div style="font-size:11px; color:var(--muted); margin-top:2px;">${esc(t.description)}</div></div>
+      </div>
+    `).join('');
+
+    html += `
+      <div style="background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:24px;">
+        <h3 style="margin:0 0 16px 0; font-family:'Space Grotesk',sans-serif; font-size:16px; color:var(--amber);">${tf} Timeframe</h3>
+
+        <div class="analysis-grid">
+          <div class="card">
+            <h4>Chart Reading</h4>
+            <div class="levels-box">
+              <div class="level">
+                <span class="label">Price</span>
+                <span class="value">${esc(readings.currentPrice)}</span>
+              </div>
+              <div class="level">
+                <span class="label">Trend</span>
+                <span class="value">${esc(readings.trend)}</span>
+              </div>
+              <div class="level">
+                <span class="label">ST Trend</span>
+                <span class="value">${esc(readings.shortTermTrend)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4>Key Levels</h4>
+            <div class="levels-box">
+              <div class="level">
+                <span class="label">R2</span>
+                <span class="value">${esc((readings.keyLevels || {}).resistance2)}</span>
+              </div>
+              <div class="level">
+                <span class="label">R1</span>
+                <span class="value">${esc((readings.keyLevels || {}).resistance1)}</span>
+              </div>
+              <div class="level">
+                <span class="label">S1</span>
+                <span class="value">${esc((readings.keyLevels || {}).support1)}</span>
+              </div>
+              <div class="level">
+                <span class="label">S2</span>
+                <span class="value">${esc((readings.keyLevels || {}).support2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4>Confluence & Factors</h4>
+            <div class="gauge-row">${gaugeHtml(data.confluence)}</div>
+            <ul class="factors-list">${factors || '<li>No factors identified</li>'}</ul>
+          </div>
+
+          <div class="card">
+            <h4>Entry & Exits</h4>
+            <div class="levels-box">
+              ${entryZones}
+              <div class="level" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--line);">
+                <span class="label">Stop Loss</span>
+                <span class="value">${esc(data.stopLoss)}</span>
+              </div>
+              ${targets}
+              <div class="level" style="margin-top:8px;">
+                <span class="label">Risk:Reward</span>
+                <span class="value">${esc(data.riskReward)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4>Scenario</h4>
+            <div class="scenario-box">
+              <span class="label">Conditional</span>
+              ${esc(data.scenario)}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  content.innerHTML = html;
 }
 
 function renderAnalysis(data){
