@@ -228,14 +228,30 @@ timeframes.forEach(tf => {
   const uploadArea = document.getElementById(`uploadArea${tf}`);
   const imageInput = document.getElementById(`imageInput${tf}`);
 
-  uploadArea.addEventListener('click', () => imageInput.click());
+  if(!uploadArea || !imageInput){
+    console.error(`Missing elements for timeframe ${tf}`);
+    return;
+  }
+
+  uploadArea.addEventListener('click', () => {
+    imageInput.click();
+  });
+
   uploadArea.addEventListener('dragover', (e) => {
     e.preventDefault();
+    e.stopPropagation();
     uploadArea.classList.add('drag');
   });
-  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'));
+
+  uploadArea.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadArea.classList.remove('drag');
+  });
+
   uploadArea.addEventListener('drop', (e) => {
     e.preventDefault();
+    e.stopPropagation();
     uploadArea.classList.remove('drag');
     const files = e.dataTransfer.files;
     if(files.length) handleImageSelect(tf, files[0]);
