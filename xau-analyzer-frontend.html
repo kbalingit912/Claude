@@ -395,93 +395,98 @@ function renderMultiTimeframeAnalysis(results, errors){
     }
 
     const data = results[tf];
-    const readings = data.chartReadings || {};
-    const factors = (readings.confluenceFactors || []).map(f => `<li>${esc(f)}</li>`).join('');
-    const entryZones = (data.entryZones || []).map(e => `
-      <div class="level">
-        <span class="label">Entry</span>
-        <div><div class="value">${esc(e.level)}</div><div style="font-size:11px; color:var(--muted); margin-top:2px;">${esc(e.description)}</div></div>
-      </div>
-    `).join('');
-    const targets = (data.targets || []).map(t => `
-      <div class="level">
-        <span class="label">Target</span>
-        <div><div class="value">${esc(t.level)}</div><div style="font-size:11px; color:var(--muted); margin-top:2px;">${esc(t.description)}</div></div>
-      </div>
-    `).join('');
+    const sr = data.supportResistance || {};
+    const ema = data.emaAnalysis || {};
+    const rsi = data.rsiMomentum || {};
+    const macd = data.macd || {};
+
+    // Determine verdict color
+    let verdictColor = var(--muted);
+    if(data.verdict === 'BUY SETUP') verdictColor = 'var(--up)';
+    else if(data.verdict === 'SELL SETUP') verdictColor = 'var(--down)';
+    else if(data.verdict === 'WAIT') verdictColor = 'var(--amber)';
 
     html += `
       <div style="background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:24px;">
         <h3 style="margin:0 0 16px 0; font-family:'Space Grotesk',sans-serif; font-size:16px; color:var(--amber);">${tf} Timeframe</h3>
 
         <div class="analysis-grid">
+          <!-- Market Bias -->
           <div class="card">
-            <h4>Chart Reading</h4>
-            <div class="levels-box">
-              <div class="level">
-                <span class="label">Price</span>
-                <span class="value">${esc(readings.currentPrice)}</span>
-              </div>
-              <div class="level">
-                <span class="label">Trend</span>
-                <span class="value">${esc(readings.trend)}</span>
-              </div>
-              <div class="level">
-                <span class="label">ST Trend</span>
-                <span class="value">${esc(readings.shortTermTrend)}</span>
-              </div>
+            <h4>Market Bias</h4>
+            <div style="font-size:18px; font-weight:600; margin-top:8px; text-transform:uppercase;">
+              <span style="color:${data.marketBias === 'bullish' ? 'var(--up)' : data.marketBias === 'bearish' ? 'var(--down)' : 'var(--amber)'};">${esc(data.marketBias)}</span>
             </div>
           </div>
 
+          <!-- Trend & Structure -->
+          <div class="card">
+            <h4>Trend & Market Structure</h4>
+            <div style="font-size:13px; line-height:1.6; color:var(--text); margin-top:8px;">${esc(data.trendAndStructure)}</div>
+          </div>
+
+          <!-- Support & Resistance -->
           <div class="card">
             <h4>Key Levels</h4>
             <div class="levels-box">
-              <div class="level">
-                <span class="label">R2</span>
-                <span class="value">${esc((readings.keyLevels || {}).resistance2)}</span>
-              </div>
-              <div class="level">
-                <span class="label">R1</span>
-                <span class="value">${esc((readings.keyLevels || {}).resistance1)}</span>
-              </div>
-              <div class="level">
-                <span class="label">S1</span>
-                <span class="value">${esc((readings.keyLevels || {}).support1)}</span>
-              </div>
-              <div class="level">
-                <span class="label">S2</span>
-                <span class="value">${esc((readings.keyLevels || {}).support2)}</span>
-              </div>
+              <div class="level"><span class="label">R2</span><span class="value">${esc(sr.resistance2)}</span></div>
+              <div class="level"><span class="label">R1</span><span class="value">${esc(sr.resistance1)}</span></div>
+              <div class="level"><span class="label">S1</span><span class="value">${esc(sr.support1)}</span></div>
+              <div class="level"><span class="label">S2</span><span class="value">${esc(sr.support2)}</span></div>
             </div>
           </div>
 
+          <!-- EMA Analysis -->
           <div class="card">
-            <h4>Confluence & Factors</h4>
-            <div class="gauge-row">${gaugeHtml(data.confluence)}</div>
-            <ul class="factors-list">${factors || '<li>No factors identified</li>'}</ul>
-          </div>
-
-          <div class="card">
-            <h4>Entry & Exits</h4>
+            <h4>EMA 5/20 Analysis</h4>
             <div class="levels-box">
-              ${entryZones}
+              <div class="level"><span class="label">EMA 5</span><span class="value">${esc(ema.ema5)}</span></div>
+              <div class="level"><span class="label">EMA 20</span><span class="value">${esc(ema.ema20)}</span></div>
+              <div class="level"><span class="label">Relationship</span><span class="value">${esc(ema.relationship)}</span></div>
               <div class="level" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--line);">
-                <span class="label">Stop Loss</span>
-                <span class="value">${esc(data.stopLoss)}</span>
-              </div>
-              ${targets}
-              <div class="level" style="margin-top:8px;">
-                <span class="label">Risk:Reward</span>
-                <span class="value">${esc(data.riskReward)}</span>
+                <span class="label">Signal</span>
+                <span class="value" style="color:${ema.signal === 'BUY' ? 'var(--up)' : ema.signal === 'SELL' ? 'var(--down)' : 'var(--amber)'};">${esc(ema.signal)}</span>
               </div>
             </div>
           </div>
 
+          <!-- RSI & Momentum -->
           <div class="card">
-            <h4>Scenario</h4>
-            <div class="scenario-box">
-              <span class="label">Conditional</span>
-              ${esc(data.scenario)}
+            <h4>RSI / Momentum</h4>
+            <div style="font-size:13px; line-height:1.6; color:var(--text); margin-top:8px;">
+              <div style="margin-bottom:8px;"><span style="color:var(--muted); font-size:11px; text-transform:uppercase;">RSI Level: </span><span style="font-weight:600;">${esc(rsi.rsiLevel)}</span></div>
+              <div>${esc(rsi.interpretation)}</div>
+            </div>
+          </div>
+
+          <!-- MACD -->
+          <div class="card">
+            <h4>MACD</h4>
+            <div style="font-size:13px; line-height:1.6; color:var(--text); margin-top:8px;">
+              <div style="margin-bottom:8px;"><span style="color:var(--muted); font-size:11px; text-transform:uppercase;">Status: </span><span style="font-weight:600;">${esc(macd.status)}</span></div>
+              <div>${esc(macd.interpretation)}</div>
+            </div>
+          </div>
+
+          <!-- Entry Quality -->
+          <div class="card">
+            <h4>Entry Quality</h4>
+            <div style="font-size:13px; line-height:1.6; color:var(--text); margin-top:8px;">${esc(data.entryQuality)}</div>
+          </div>
+
+          <!-- Final Verdict -->
+          <div class="card" style="grid-column:1/-1; background:rgba(240,169,62,.08); border-color:var(--amber);">
+            <h4>Verdict & Confidence</h4>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px;">
+              <div>
+                <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px; letter-spacing:.08em;">Final Verdict</div>
+                <div style="font-size:18px; font-weight:700; color:${verdictColor};">${esc(data.verdict)}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:8px; letter-spacing:.08em;">Confidence</div>
+                <div style="font-size:24px; font-weight:700; color:var(--text);">${data.confidence}/10</div>
+                <div style="font-size:11px; color:var(--muted); margin-top:6px; max-width:200px;">${esc(data.confidenceReason)}</div>
+              </div>
             </div>
           </div>
         </div>

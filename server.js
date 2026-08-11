@@ -54,42 +54,39 @@ app.post('/api/analyze-chart', async (req, res) => {
               },
               {
                 type: 'text',
-                text: `You are a XAU/USD (gold) trading analyst. Analyze this TradingView chart carefully and respond with ONLY minified JSON (no markdown, no commentary) matching exactly this schema:
+                text: `You are a XAU/USD (gold) trading analyst. Analyze this TradingView chart and respond with ONLY minified JSON (no markdown, no commentary) matching exactly this schema:
 
 {
   "timestamp": "<current date/time>",
-  "chartReadings": {
-    "currentPrice": "<latest price level shown, e.g. 2045.50>",
-    "trend": "bullish|bearish|range",
-    "shortTermTrend": "up|down|consolidating",
-    "keyLevels": {
-      "resistance1": "<nearest resistance above current price>",
-      "resistance2": "<second resistance level>",
-      "support1": "<nearest support below current price>",
-      "support2": "<second support level>"
-    },
-    "confluenceFactors": ["<up to 4 key technical or structural factors you observe>"]
+  "marketBias": "bullish|bearish|neutral",
+  "trendAndStructure": "<=40 words describing the trend direction and market structure",
+  "supportResistance": {
+    "resistance1": "<nearest resistance level>",
+    "resistance2": "<second resistance level>",
+    "support1": "<nearest support level>",
+    "support2": "<second support level>"
   },
-  "entryZones": [
-    {
-      "level": "<entry price level>",
-      "description": "<=20 words describing why this level makes sense"
-    }
-  ],
-  "stopLoss": "<stop level below current structure>",
-  "targets": [
-    {
-      "level": "<target price>",
-      "description": "<=15 words describing this target"
-    }
-  ],
-  "riskReward": "<e.g. '1:2' or '1:3' - ratio of stop distance to first target>",
-  "confluence": <0-4 number of independent factors aligning: trend direction, key level proximity, pattern formation, momentum>,
-  "scenario": "<=35 words, CONDITIONAL phrasing only. E.g. 'A close above X could open a move to Y; failure of X risks a drop to Z.' Never use 'buy now' or 'sell now'.",
-  "caveats": ["<=15 words each, up to 2 factors limiting confidence or adding risk"]
+  "emaAnalysis": {
+    "ema5": "<level or 'N/A'>",
+    "ema20": "<level or 'N/A'>",
+    "relationship": "EMA5 above EMA20|EMA5 below EMA20|convergent|N/A",
+    "signal": "BUY|SELL|WAIT"
+  },
+  "rsiMomentum": {
+    "rsiLevel": "<e.g. 65, or 'N/A' if not visible>",
+    "interpretation": "<=25 words, overbought/oversold/neutral interpretation"
+  },
+  "macd": {
+    "status": "bullish cross|bearish cross|diverging|converging|N/A",
+    "interpretation": "<=25 words describing MACD signal"
+  },
+  "entryQuality": "<=30 words: Is price extended or at a good entry? Quality of setup?",
+  "verdict": "BUY SETUP|SELL SETUP|WAIT|NO TRADE",
+  "confidence": <1-10 number>,
+  "confidenceReason": "<=20 words explaining the confidence level"
 }
 
-Rules: Use ONLY what's visible in the chart. Never invent levels not shown. Always use conditional language in scenario ("could", "if", "risks", "watch for"). Be specific with numbers. Output raw JSON only.`
+Rules: Use ONLY what's visible in chart. Never invent data. Be specific with numbers. No directive language (no 'buy now/sell now'). Output raw JSON only.`
               }
             ]
           }
