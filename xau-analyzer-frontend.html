@@ -55,7 +55,6 @@
   }
   .upload-area:hover{border-color:var(--amber); background:rgba(240,169,62,.05);}
   .upload-area.drag{border-color:var(--up); background:rgba(22,217,130,.08);}
-  .upload-area input{display:none;}
   .upload-area p{margin:0 0 8px 0; color:var(--muted); font-size:13px;}
   .upload-area .hint{font-size:12px; color:var(--muted); margin-top:8px;}
 
@@ -159,35 +158,43 @@
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:16px;">
       <!-- 4H -->
-      <div class="upload-area" onclick="document.getElementById('imageInput4H').click()">
-        <input type="file" id="imageInput4H" accept="image/*" onchange="handleFileSelect('4H', this.files)" />
-        <p style="font-weight:600;">4 HOUR</p>
-        <p>Click to upload or drag</p>
-        <div class="hint">PNG, JPG, or WebP</div>
+      <div class="upload-area" style="position:relative;">
+        <input type="file" id="imageInput4H" accept="image/*" style="opacity:0; width:100%; height:100%; position:absolute; top:0; left:0; cursor:pointer;" />
+        <div style="pointer-events:none;">
+          <p style="font-weight:600;">4 HOUR</p>
+          <p>Click to upload or drag</p>
+          <div class="hint">PNG, JPG, or WebP</div>
+        </div>
       </div>
 
       <!-- 1H -->
-      <div class="upload-area" onclick="document.getElementById('imageInput1H').click()">
-        <input type="file" id="imageInput1H" accept="image/*" onchange="handleFileSelect('1H', this.files)" />
-        <p style="font-weight:600;">1 HOUR</p>
-        <p>Click to upload or drag</p>
-        <div class="hint">PNG, JPG, or WebP</div>
+      <div class="upload-area" style="position:relative;">
+        <input type="file" id="imageInput1H" accept="image/*" style="opacity:0; width:100%; height:100%; position:absolute; top:0; left:0; cursor:pointer;" />
+        <div style="pointer-events:none;">
+          <p style="font-weight:600;">1 HOUR</p>
+          <p>Click to upload or drag</p>
+          <div class="hint">PNG, JPG, or WebP</div>
+        </div>
       </div>
 
       <!-- 15M -->
-      <div class="upload-area" onclick="document.getElementById('imageInput15M').click()">
-        <input type="file" id="imageInput15M" accept="image/*" onchange="handleFileSelect('15M', this.files)" />
-        <p style="font-weight:600;">15 MIN</p>
-        <p>Click to upload or drag</p>
-        <div class="hint">PNG, JPG, or WebP</div>
+      <div class="upload-area" style="position:relative;">
+        <input type="file" id="imageInput15M" accept="image/*" style="opacity:0; width:100%; height:100%; position:absolute; top:0; left:0; cursor:pointer;" />
+        <div style="pointer-events:none;">
+          <p style="font-weight:600;">15 MIN</p>
+          <p>Click to upload or drag</p>
+          <div class="hint">PNG, JPG, or WebP</div>
+        </div>
       </div>
 
       <!-- 5M -->
-      <div class="upload-area" onclick="document.getElementById('imageInput5M').click()">
-        <input type="file" id="imageInput5M" accept="image/*" onchange="handleFileSelect('5M', this.files)" />
-        <p style="font-weight:600;">5 MIN</p>
-        <p>Click to upload or drag</p>
-        <div class="hint">PNG, JPG, or WebP</div>
+      <div class="upload-area" style="position:relative;">
+        <input type="file" id="imageInput5M" accept="image/*" style="opacity:0; width:100%; height:100%; position:absolute; top:0; left:0; cursor:pointer;" />
+        <div style="pointer-events:none;">
+          <p style="font-weight:600;">5 MIN</p>
+          <p>Click to upload or drag</p>
+          <div class="hint">PNG, JPG, or WebP</div>
+        </div>
       </div>
     </div>
 
@@ -228,14 +235,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Setup file inputs and drag-drop
   timeframes.forEach(tf => {
     const imageInput = document.getElementById(`imageInput${tf}`);
-
-    // Find parent upload-area for this input
-    const uploadArea = imageInput.parentElement;
-
     if(!imageInput){
       console.error(`Missing input for ${tf}`);
       return;
     }
+
+    // The upload-area is now the direct parent
+    const uploadArea = imageInput.parentElement;
 
     // File input change handler
     imageInput.addEventListener('change', (e) => {
@@ -245,23 +251,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Drag and drop on upload area
-    if(uploadArea){
-      uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('drag');
-      });
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadArea.classList.add('drag');
+    });
 
-      uploadArea.addEventListener('dragleave', (e) => {
-        uploadArea.classList.remove('drag');
-      });
+    uploadArea.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadArea.classList.remove('drag');
+    });
 
-      uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('drag');
-        const files = e.dataTransfer.files;
-        if(files.length) handleImageSelect(tf, files[0]);
-      });
-    }
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadArea.classList.remove('drag');
+      const files = e.dataTransfer.files;
+      if(files.length) handleImageSelect(tf, files[0]);
+    });
   });
 });
 
