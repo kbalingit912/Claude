@@ -160,7 +160,7 @@
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:16px;">
       <!-- 4H -->
       <div class="upload-area" onclick="document.getElementById('imageInput4H').click()">
-        <input type="file" id="imageInput4H" accept="image/*" />
+        <input type="file" id="imageInput4H" accept="image/*" onchange="handleFileSelect('4H', this.files)" />
         <p style="font-weight:600;">4 HOUR</p>
         <p>Click to upload or drag</p>
         <div class="hint">PNG, JPG, or WebP</div>
@@ -168,7 +168,7 @@
 
       <!-- 1H -->
       <div class="upload-area" onclick="document.getElementById('imageInput1H').click()">
-        <input type="file" id="imageInput1H" accept="image/*" />
+        <input type="file" id="imageInput1H" accept="image/*" onchange="handleFileSelect('1H', this.files)" />
         <p style="font-weight:600;">1 HOUR</p>
         <p>Click to upload or drag</p>
         <div class="hint">PNG, JPG, or WebP</div>
@@ -176,7 +176,7 @@
 
       <!-- 15M -->
       <div class="upload-area" onclick="document.getElementById('imageInput15M').click()">
-        <input type="file" id="imageInput15M" accept="image/*" />
+        <input type="file" id="imageInput15M" accept="image/*" onchange="handleFileSelect('15M', this.files)" />
         <p style="font-weight:600;">15 MIN</p>
         <p>Click to upload or drag</p>
         <div class="hint">PNG, JPG, or WebP</div>
@@ -184,7 +184,7 @@
 
       <!-- 5M -->
       <div class="upload-area" onclick="document.getElementById('imageInput5M').click()">
-        <input type="file" id="imageInput5M" accept="image/*" />
+        <input type="file" id="imageInput5M" accept="image/*" onchange="handleFileSelect('5M', this.files)" />
         <p style="font-weight:600;">5 MIN</p>
         <p>Click to upload or drag</p>
         <div class="hint">PNG, JPG, or WebP</div>
@@ -265,7 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-function handleImageSelect(timeframe, file){
+function handleFileSelect(timeframe, files){
+  if(!files || !files.length) return;
+  const file = files[0];
   if(file.size > 10*1024*1024){ alert('File too large (max 10MB)'); return; }
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -274,6 +276,10 @@ function handleImageSelect(timeframe, file){
     updateButtons();
   };
   reader.readAsDataURL(file);
+}
+
+function handleImageSelect(timeframe, file){
+  handleFileSelect(timeframe, [file]);
 }
 
 function updatePreviews(){
