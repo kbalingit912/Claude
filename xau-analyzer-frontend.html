@@ -448,7 +448,7 @@ function renderMultiTimeframeAnalysis(results, errors){
     const macd = data.macd || {};
 
     // Determine verdict color
-    let verdictColor = var(--muted);
+    let verdictColor = 'var(--muted)';
     if(data.verdict === 'BUY SETUP') verdictColor = 'var(--up)';
     else if(data.verdict === 'SELL SETUP') verdictColor = 'var(--down)';
     else if(data.verdict === 'WAIT') verdictColor = 'var(--amber)';
