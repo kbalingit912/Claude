@@ -159,7 +159,7 @@
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:16px;">
       <!-- 4H -->
-      <div class="upload-area" id="uploadArea4H" data-timeframe="4H">
+      <div class="upload-area" onclick="document.getElementById('imageInput4H').click()">
         <input type="file" id="imageInput4H" accept="image/*" />
         <p style="font-weight:600;">4 HOUR</p>
         <p>Click to upload or drag</p>
@@ -167,7 +167,7 @@
       </div>
 
       <!-- 1H -->
-      <div class="upload-area" id="uploadArea1H" data-timeframe="1H">
+      <div class="upload-area" onclick="document.getElementById('imageInput1H').click()">
         <input type="file" id="imageInput1H" accept="image/*" />
         <p style="font-weight:600;">1 HOUR</p>
         <p>Click to upload or drag</p>
@@ -175,7 +175,7 @@
       </div>
 
       <!-- 15M -->
-      <div class="upload-area" id="uploadArea15M" data-timeframe="15M">
+      <div class="upload-area" onclick="document.getElementById('imageInput15M').click()">
         <input type="file" id="imageInput15M" accept="image/*" />
         <p style="font-weight:600;">15 MIN</p>
         <p>Click to upload or drag</p>
@@ -183,7 +183,7 @@
       </div>
 
       <!-- 5M -->
-      <div class="upload-area" id="uploadArea5M" data-timeframe="5M">
+      <div class="upload-area" onclick="document.getElementById('imageInput5M').click()">
         <input type="file" id="imageInput5M" accept="image/*" />
         <p style="font-weight:600;">5 MIN</p>
         <p>Click to upload or drag</p>
@@ -225,47 +225,43 @@ document.addEventListener('DOMContentLoaded', () => {
   clearBtn = document.getElementById('clearBtn');
   content = document.getElementById('content');
 
-  // Setup upload areas
+  // Setup file inputs and drag-drop
   timeframes.forEach(tf => {
-    const uploadArea = document.getElementById(`uploadArea${tf}`);
     const imageInput = document.getElementById(`imageInput${tf}`);
 
-    if(!uploadArea || !imageInput){
-      console.error(`Missing elements for ${tf}`);
+    // Find parent upload-area for this input
+    const uploadArea = imageInput.parentElement;
+
+    if(!imageInput){
+      console.error(`Missing input for ${tf}`);
       return;
     }
 
-    // Click to open file dialog
-    uploadArea.style.cursor = 'pointer';
-    uploadArea.addEventListener('click', (e) => {
-      imageInput.click();
-    });
-
-    // Drag and drop
-    uploadArea.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      uploadArea.classList.add('drag');
-    });
-
-    uploadArea.addEventListener('dragleave', (e) => {
-      uploadArea.classList.remove('drag');
-    });
-
-    uploadArea.addEventListener('drop', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      uploadArea.classList.remove('drag');
-      const files = e.dataTransfer.files;
-      if(files.length) handleImageSelect(tf, files[0]);
-    });
-
-    // File input change
+    // File input change handler
     imageInput.addEventListener('change', (e) => {
       if(e.target.files && e.target.files.length) {
         handleImageSelect(tf, e.target.files[0]);
       }
     });
+
+    // Drag and drop on upload area
+    if(uploadArea){
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag');
+      });
+
+      uploadArea.addEventListener('dragleave', (e) => {
+        uploadArea.classList.remove('drag');
+      });
+
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag');
+        const files = e.dataTransfer.files;
+        if(files.length) handleImageSelect(tf, files[0]);
+      });
+    }
   });
 });
 
