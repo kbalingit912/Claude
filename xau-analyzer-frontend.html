@@ -521,6 +521,18 @@ function renderMultiTimeframeAnalysis(results, errors){
             <div style="font-size:13px; line-height:1.6; color:var(--text); margin-top:8px;">${esc(data.entryQuality)}</div>
           </div>
 
+          <!-- Recommended Entry & Levels -->
+          <div class="card" style="background:rgba(22,217,130,.08); border-color:var(--up);">
+            <h4 style="color:var(--up);">Recommended Entry, SL, TP</h4>
+            <div class="levels-box">
+              <div class="level"><span class="label">Entry</span><span class="value" style="color:var(--up); font-weight:600;">${esc(data.levels?.entry || 'N/A')}</span></div>
+              <div class="level"><span class="label">Stop Loss</span><span class="value" style="color:var(--down); font-weight:600;">${esc(data.levels?.stopLoss || 'N/A')}</span></div>
+              <div class="level" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--line);"><span class="label">TP1</span><span class="value" style="color:var(--amber);">${esc(data.levels?.takeProfit1 || 'N/A')}</span></div>
+              <div class="level"><span class="label">TP2</span><span class="value" style="color:var(--amber);">${esc(data.levels?.takeProfit2 || 'N/A')}</span></div>
+              <div class="level"><span class="label">TP3</span><span class="value" style="color:var(--amber);">${esc(data.levels?.takeProfit3 || 'N/A')}</span></div>
+            </div>
+          </div>
+
           <!-- Final Verdict -->
           <div class="card" style="grid-column:1/-1; background:rgba(240,169,62,.08); border-color:var(--amber);">
             <h4>Verdict & Confidence</h4>

@@ -81,6 +81,13 @@ app.post('/api/analyze-chart', async (req, res) => {
     "interpretation": "<=25 words describing MACD signal"
   },
   "entryQuality": "<=30 words: Is price extended or at a good entry? Quality of setup?",
+  "levels": {
+    "entry": "<specific entry price level or price zone>",
+    "stopLoss": "<stop loss level below entry for longs, above for shorts>",
+    "takeProfit1": "<first take profit level>",
+    "takeProfit2": "<second take profit level>",
+    "takeProfit3": "<third take profit level>"
+  },
   "verdict": "BUY SETUP|SELL SETUP|WAIT|NO TRADE",
   "confidence": <1-10 number>,
   "confidenceReason": "<=20 words explaining the confidence level"
